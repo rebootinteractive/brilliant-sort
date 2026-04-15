@@ -1,0 +1,270 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg: #1a1a2e;
+  --surface: #16213e;
+  --border: #0f3460;
+  --text: #e0e0e0;
+  --text-dim: #888;
+  --slot-empty: #2a2a3e;
+  --cell-size: 28px;
+  --gap: 2px;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+}
+
+/* ── Layout ── */
+
+.app {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 700px;
+  padding: 12px 8px 24px;
+  gap: 14px;
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0 4px;
+}
+
+.app-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.exp-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  cursor: pointer;
+  user-select: none;
+}
+.exp-label input { cursor: pointer; accent-color: var(--border); }
+
+.restart-btn {
+  background: var(--border);
+  color: var(--text);
+  border: none;
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.restart-btn:hover { background: #1a4a80; }
+
+.game-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+
+/* ── Top Grid ── */
+
+.top-grid {
+  display: grid;
+  grid-template-columns: repeat(12, var(--cell-size));
+  grid-template-rows: repeat(10, var(--cell-size));
+  gap: var(--gap);
+  background: var(--surface);
+  padding: 6px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.grid-slot {
+  width: var(--cell-size);
+  height: var(--cell-size);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: filter 0.1s;
+}
+
+/* Tooltip shown on hover via CSS pseudo-element */
+.grid-slot[data-tooltip]:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 5px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #111827;
+  color: #e5e7eb;
+  border: 1px solid #374151;
+  padding: 4px 8px;
+  border-radius: 5px;
+  font-size: 10px;
+  line-height: 1.6;
+  white-space: pre;    /* preserves the \n as a line break */
+  pointer-events: none;
+  z-index: 200;
+  box-shadow: 0 2px 8px #0006;
+}
+/* Keep tooltip on-screen for the top two rows */
+.grid-slot[data-tooltip]:nth-child(-n+24):hover::after {
+  bottom: auto;
+  top: calc(100% + 5px);
+}
+
+.grid-slot.has-piece {
+  cursor: pointer;
+}
+.grid-slot.has-piece:hover {
+  filter: brightness(1.3);
+}
+
+.piece {
+  width: 78%;
+  height: 78%;
+  border-radius: 50%;
+  pointer-events: none;
+  /* border-radius transition gives the circle → square morph */
+  transition: transform 0.1s, border-radius 0.35s ease;
+}
+
+.grid-slot.has-piece:hover .piece {
+  transform: scale(1.15);
+}
+
+/* Correctly placed piece: becomes a rounded square */
+.grid-slot.correct .piece {
+  border-radius: 20%;
+  box-shadow: 0 0 0 2px #ffffff55;
+}
+
+/* ── Bottom Boxes ── */
+
+.bottom-boxes {
+  /* 5 columns × 2 rows for 10 boxes, matching the grid width */
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  width: 100%;
+}
+
+.box {
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 8px;
+  transition: border-color 0.2s;
+}
+
+.box.full {
+  box-shadow: 0 0 8px 2px #fff3;
+}
+
+.box-label {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  text-align: center;
+  margin-bottom: 4px;
+  text-transform: capitalize;
+}
+
+.box-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 14px);
+  grid-template-rows: repeat(2, 14px);
+  gap: 2px;
+}
+
+.box-slot {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  background: var(--slot-empty);
+  transition: background 0.15s;
+}
+
+.box-slot.filled {
+  border-radius: 50%;
+  transition: border-radius 0.3s ease;
+}
+
+@keyframes box-distribute-glow {
+  0%, 100% { box-shadow: 0 0 6px 2px #fff2; }
+  50%       { box-shadow: 0 0 18px 6px #fff6; }
+}
+
+@keyframes slot-drain {
+  0%, 100% { transform: scale(1);    opacity: 1;    }
+  50%       { transform: scale(1.3); opacity: 0.75; }
+}
+
+.box.distributing {
+  animation: box-distribute-glow 900ms ease-in-out infinite;
+}
+
+.box.distributing .box-slot.filled {
+  border-radius: 20%;
+  animation: slot-drain 900ms ease-in-out infinite;
+}
+
+/* ── Overlay ── */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: #000a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.overlay-box {
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 32px 40px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.overlay-box h2 {
+  font-size: 2rem;
+}
+
+.overlay-box p {
+  color: var(--text-dim);
+}
+
+.overlay-box button {
+  margin-top: 8px;
+  background: var(--border);
+  color: var(--text);
+  border: none;
+  border-radius: 8px;
+  padding: 10px 24px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.overlay-box button:hover { background: #1a4a80; }
